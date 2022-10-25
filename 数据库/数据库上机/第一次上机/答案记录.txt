@@ -1,0 +1,96 @@
+16
+select cast(count(comm)*1.0/count(*) as decimal(13,12))
+from emp;
+17
+select job,avg(sal)average
+from emp
+group by job;
+18
+select deptno,job,avg(sal)average,max(sal)max
+from emp
+group by job,deptno;
+19
+select deptno,avg(sal)average,max(sal)max
+from emp
+group by deptno
+having avg(sal)<2500;
+20
+select deptno,avg(sal)average,max(sal)max
+from emp
+group by deptno
+having avg(sal)<2500
+order by average asc;
+21
+select ename,sal,job,deptno
+from emp
+where sal > 2500 or job = 'MANAGER';
+22
+select ename,deptno,sal
+from emp
+order by deptno asc,sal desc,hiredate asc;
+23
+select dname,ename
+from emp inner join dept on emp.deptno=dept.deptno;
+24
+select emp1.ename
+from emp as emp1 inner join emp as emp2 on emp1.empno = emp2.mgr
+where emp2.ename = 'SCOTT';
+25
+select dname,ename
+from dept left join emp on dept.deptno=emp.deptno;
+26
+select ename,sal,grade
+from emp left join salgrade on emp.sal >= salgrade.losal and emp.sal <= salgrade.hisal
+order by grade asc;
+27
+select ename,sal
+from emp left join dept on emp.deptno = dept.deptno
+where dname = 'accounting';
+28
+select ename,job,sal,deptno
+from emp
+where job in (select job from emp where deptno = 10);
+29
+select ename,sal,deptno
+from emp 
+where sal > (select max(sal) from emp where deptno = 30);
+30
+select ename,sal,job
+from emp
+where sal > 2500
+union
+select ename,sal,job
+from emp
+where job = 'manager';
+31
+select ename,sal,job
+from emp
+where sal > 2500
+intersect
+select ename,sal,job
+from emp
+where job = 'manager';
+32
+select ename,sal,job
+from emp
+where sal > 2500
+except
+select ename,sal,job
+from emp
+where job = 'manager';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

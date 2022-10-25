@@ -1,0 +1,348 @@
+大连理工大学软件学院——数据库上机题1
+ 
+1. Find the ID, names of all the students from departments whose name contain character '功'.
+2. Find the ID, names and total credits of students in 邪门学院 department or in 兵器学院 department whose total credits are higher than 50 credits
+3. For the instructor 83821, show course_id and title of all courses taught by the instructor
+4. As above, but show the total number of credits for such courses (taught by that instructor). You should use SQL aggregation on courses taught by that instructor.
+5. As above, but display the total credits for each of the instructors, along with the ID of the instructor; don't bother about the name of the instructors.
+ (Don't bother about instructors who have not taught any course, they can be omitted)
+6. Find average instructors' salaries for each of courses, along with the course_id and title of the course, taught by instructors of 内功学院, theresult should be sorted from the lowest to the highest according to the average salaries.
+7. Find the names of all courses which have been taught in 南疆雨林 ever (there should be no duplicate names)
+8. Display the IDs and names of all students who have never registered for a course
+9. Find the id and names of the courses which have been registered by some students without evaluated grade.
+10. Find the courses which are the Subsequence courses of othercourses. The result should involve the ids and titles of the Subsequencecourses and the ids and titles of its prerequisites (note: the names ofcolumns in result should show the roles of the courses clearly)
+
+????select id,name 
+from student  
+where dept_name like '%功%' 
+   
+select id,name,tot_cred  
+from student  
+where dept_name='兵器学院' or dept_name='邪门学院' 
+        and tot_cred>50  
+group by id,name,tot_cred  
+   
+select distinct course.course_id,title  
+from course join teaches on course.course_id=teaches.course_id  
+where teaches.id=83821  
+   
+select distinct course.course_id,title,sum(credits) as cre_sum  
+from course join teaches on course.course_id=teaches.course_id  
+where teaches.id=83821  
+group by course.course_id,title  
+   
+select S.id,sum(credits) as cre_sum  
+from instructor as S,teaches as T,course  
+where S.id=T.id and T.course_id=course.course_id  
+group by S.id  
+   
+   
+select course.course_id,title,AVG(salary) as avg_sal  
+from course,instructor as T,teaches  
+where course.dept_name='内功学院' 
+         and T.dept_name='内功学院' 
+         and teaches.id=T.id  
+         and teaches.course_id=course.course_id  
+group by course.course_id,course.title  
+order by avg_sal desc 
+   
+   
+select distinct T.title  
+from section as S,course as T  
+where T.course_id=S.course_id  
+    and S.building='南疆雨林' 
+   
+select id,name 
+from student  
+where id not in(select id from takes)  
+   
+select S.course_id,S.title,'SubCourse' as Role, T.course_id,T.title,'PreCourse' as Role  
+from course as S,course as T,prereq  
+where S.course_id=prereq.course_id and prereq.prereq_id=T.course_id  
+
+
+
+大连理工大学软件学院——数据库上机题2
+Intermediate SQL-2
+
+Using the university schema that you have write the following queries. In some cases you
+
+might need to insert extra data to show the effect of a particular feature.
+
+Recommendation: With clause is strongly recommended for simplifying the query.
+
+1. Find the courses which have been offered for 2 years at least and have sections in spring,
+
+2010. For each course as such, information displayed should involve:
+
+* Identifier of course(i.e. the primary key for section) * Title of the course
+
+* Number of instructors who in charge of teaching the course in spring ,2010
+
+* Total salary all over the instructors who in charge of teaching the course in
+
+spring ,2010
+
+* Total credit hours performed per week( Note: 1 credit hour equals to 50 minutes).
+
+2. USE outer join to construct the following query
+
+Find all information for student registration and course offered.
+
+The students who have
+
+never registered for any courses and the courses has never been offered. For each record in
+
+the result, information displayed should involve:
+
+* Identifier of student(i.e. the primary key for student) * Name of student
+
+* Identifier of section(i.e. the primary key for section) * Title of course.
+
+The result should be like the following
+
+3. USE scalar subquery to construct the following query
+
+For all students, grade information of each student is needed. Those students who have
+
+never registered for any section should also be considered. For each student, information
+
+displayed should involve:
+
+* Identifier of student(i.e. the primary key for student) * Name of student
+
+* Department name of student
+
+* Number of failure for the student to pass some section. (That is the number of grade ‘F’)
+
+* Total number of failure of passing sections for the students in the same department as
+
+the current student.
+
+4. Find students who have registered for some but not all courses(PART COURSE, for short)
+
+taught by instructors of department '拳脚学院'. Furthermore, the registration of these
+
+students for such courses (i.e. PART COURSE above) should have grade, even the grade is
+
+‘F’. Do this using the "not exists ... except ..." structure. For each student as such,
+
+information displayed should involve:
+
+* Identifier of student(i.e. the primary key for student) * Name of the student
+
+* Number of courses, taught by instructors of department '拳脚学院', registered by the
+
+student
+
+5. Use EXISTS or NOT EXISTS clause in WHERE clause to construct following query.
+
+Find those sections which have no instructor as the teacher. Moreover, these sections
+
+should have never been registered by any student. For each section as such, information
+
+displayed should involve:
+
+* Identifier of student(i.e. the primary key for student) * Name of the corresponding course.
+
+* Credits of the course
+
+--1
+
+with course_twoYear(course_id) as
+
+(select course_id from teaches where
+
+course_id in
+
+(select course_id
+
+from teaches where year=2009)
+
+intersect
+
+(select course_id
+
+from teaches where year=2010 and semester='Spring')), number(course_id,ID,num) as (select
+
+course_id,ID,COUNT(sec_id)from teaches
+
+where year=2010 and semester='Spring' group by course_id,ID),
+
+tot_time(course_id,times) as (select
+
+course_id,SUM(credits*50) from course group by course_id)
+
+select course.course_id ,title ,num,SUM(salary)as tot_sal,times
+
+from course_twoYear ,course ,number,instructor,tot_time where course.course_id=course_twoYear.course_id and number.course_id=course.course_id and
+
+instructor.ID=number.ID and
+
+course.course_id=tot_time.course_id
+
+group by course.course_id ,title ,num,times;
+
+--2
+
+with stu_take(course_id,name,sec_id,year,semester) as (select course_id,name,sec_id,year,semester from student left join takes on student.ID=takes.ID)
+
+select name,sec_id,year,semester,title from stu_take full join course on stu_take.course_id=course.course_id;
+
+--3
+
+select student.ID,student.name,student.dept_name, (select COUNT(takes.grade)from takes where
+
+takes.ID=student.id and takes.grade='F'),
+
+(select COUNT(takes.ID)
+
+from student,takes
+
+where student.ID=takes.ID and takes.grade='F') from student;
+
+--4
+
+with T(student_name,total_course)as
+
+(select student.name,COUNT(course.course_id)
+
+from student join takes
+
+on student.ID=takes.ID
+
+join course on takes.course_id=course.course_id where course.dept_name='拳脚学院'
+
+group by student.name)
+
+select ID,name,total_course
+
+from student join T on student.name=T.student_name where not exists(
+
+(select student_name from T where T.total_course=(select COUNT(course_id)from course where course.dept_name='拳脚学院'))
+
+except
+
+(select student_name from T)
+
+)
+
+--5
+
+select course.course_id,title,credits
+
+from course Full outer join teaches on course.course_id = teaches.course_id
+
+Full outer join takes on course.course_id = takes.course_id
+
+Full outer join section on course.course_id = section.course_id
+
+wherecourse.course_idnot；fromteaches,course,takes；whereteaches.course_id=s；andsection.course_id=tak；
+
+where course.course_id not in((select course.course_id
+
+from teaches ,course ,takes ,section
+
+where teaches.course_id = section.course_id and takes.course_id = course.course_id
+
+and section.course_id = takes.course_id ) )
+
+
+
+大连理工大学软件学院——数据库上机题3
+ 
+Using the university schema that you have write the following queries. In some cases you
+might need to insert extra data to show the effect of a particular feature.
+1. Insert each student as an instructor of department ‘拳脚学院’, with salary=40000
+2. Now delete all the newly added "instructors" above (note: already existing instructors who happened to have salary=40000 should not get deleted)
+3. Update the salary of each instructor to 10000 times the number of course sections they have taught.
+4. The university rules allow an F grade to be overridden by any pass grade (for example, A).
+Now, lists students who have fail grades that have not been overridden. For each student as such, information displayed (in one row) should involve:
+l Identifier of student
+l Name of student
+l Count of F grades that have not been overridden.
+5. In one result, list the instructors who have never taught any courses and the students who have never registered for any courses. For each person, information displayed (in one row) should involve:
+l Id of the person
+l Name of the person
+l Role of the person. The value of role should be ‘student’ or ‘instructor’.
+ 
+?
+1
+
+insert into  instructor  
+   
+select S.id,S.name,'拳脚学院',40000  
+   
+from student as S  
+   
+where S.id not in (select instructor.id from instructor)  
+   
+    
+   
+delete from instructor  
+   
+where name+id in (select name+id from student)  
+   
+    
+   
+sp_help instructor  
+   
+sp_helpconstraint instructor  
+   
+alter table instructor  
+   
+drop constraint CK__instructo__salar__1920BF5C  
+   
+update instructor  
+   
+set salary= 10000*  
+   
+(select COUNT(*) from teaches where instructor.id=teaches.id)  
+   
+    
+   
+with S(id,course_id)   
+   
+as (select distinct id,course_id   
+   
+from takes   
+   
+where grade='F'),  
+   
+R(id,course_id)   
+   
+as (select distinct T.id,T.course_id  
+   
+from takes as T,S  
+   
+where T.id=S.id   
+   
+and T.course_id=S.course_id  
+   
+and T.grade<>'F' )  
+   
+select student.ID,student.name,count(*) as FailedTimes  
+   
+from (select * from S except select *from R) as target,student  
+   
+where target.id=student.id  
+   
+group by student.ID,student.name 
+   
+    
+   
+select S.id,S.name,'Student' as Role  
+   
+from Student as S  
+   
+where S.id not in(select takes.id from takes)  
+   
+union 
+   
+select T.id,T.name,'Instructor' as Role  
+   
+from instructor as T  
+   
+where T.id not in (select teaches.id from teaches)  
+
+
